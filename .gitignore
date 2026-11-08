@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/.venv/
+.venv/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build files
+dist/
+build/
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
