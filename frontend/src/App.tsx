@@ -214,7 +214,6 @@ export function App() {
       <Sidebar
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
-        analysisCount={analysisHistory.length}
         hasActiveAnalysis={Boolean(activeAnalysis && activeAnalysis.stage === 'completed')}
       />
 
