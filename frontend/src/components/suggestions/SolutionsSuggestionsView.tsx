@@ -10,6 +10,7 @@ interface SolutionsSuggestionsViewProps {
   onRoastSolution: (sol: Solution) => void;
   onFixSolution: (sol: Solution) => void;
   onCompareWithExisting?: (sol: Solution) => void;
+  isLoading?: boolean;
 }
 
 export const SolutionsSuggestionsView: React.FC<SolutionsSuggestionsViewProps> = ({
@@ -19,8 +20,19 @@ export const SolutionsSuggestionsView: React.FC<SolutionsSuggestionsViewProps> =
   onSelectSolution,
   onRoastSolution,
   onFixSolution,
-  onCompareWithExisting
+  onCompareWithExisting,
+  isLoading = false
 }) => {
+  if (isLoading && (!solutions || solutions.length === 0)) {
+    return (
+      <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <h3 className="text-base font-bold text-white">Generating AI Solutions & Suggestions...</h3>
+        <p className="text-xs text-zinc-400">Gemini is synthesizing innovative architectures and practical implementation plans.</p>
+      </div>
+    );
+  }
+
   if (!solutions || solutions.length === 0) {
     return (
       <div className="max-w-4xl mx-auto py-12 text-center space-y-4">

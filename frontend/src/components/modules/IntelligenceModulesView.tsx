@@ -156,11 +156,10 @@ export const IntelligenceModulesView: React.FC<IntelligenceModulesViewProps> = (
             <button
               key={tab.id}
               onClick={() => handleSelectTab(tab.id)}
-              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg transition-all ${
-                isActive
-                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 font-bold shadow-glow-sm'
-                  : 'bg-[#121620] text-zinc-400 hover:text-zinc-200 border border-[#212735]'
-              }`}
+              className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-lg transition-all ${isActive
+                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/40 font-bold shadow-glow-sm'
+                : 'bg-[#121620] text-zinc-400 hover:text-zinc-200 border border-[#212735]'
+                }`}
             >
               <Icon className="w-3.5 h-3.5" />
               <span>{tab.label}</span>
@@ -184,11 +183,11 @@ export const IntelligenceModulesView: React.FC<IntelligenceModulesViewProps> = (
                 <div key={i} className="terminal-card p-5 border border-[#232936] bg-[#121620] rounded-xl flex flex-col justify-between space-y-3">
                   <div>
                     <span className="text-[10px] font-mono font-bold text-emerald-400 uppercase tracking-wider block mb-1">
-                      Unaddressed White Space #{i+1}
+                      Unaddressed White Space #{i + 1}
                     </span>
                     <h4 className="text-sm font-bold text-white mb-2">{gap.gap_title}</h4>
                     <p className="text-xs text-zinc-300 leading-relaxed mb-3">{gap.market_gap}</p>
-                    
+
                     <div className="p-2.5 rounded bg-[#0c0f15] border border-[#1f2636] text-[11px] text-zinc-400 space-y-1">
                       <div><strong className="text-zinc-300">Customer Frustration:</strong> {gap.customer_pain_point}</div>
                       <div><strong className="text-emerald-400">Opportunity:</strong> {gap.opportunity_description}</div>
@@ -259,9 +258,8 @@ export const IntelligenceModulesView: React.FC<IntelligenceModulesViewProps> = (
           {activeTab === 'business' && businessModels && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {businessModels.map((bm, i) => (
-                <div key={i} className={`terminal-card p-5 border rounded-xl space-y-3 ${
-                  bm.recommended ? 'border-emerald-500/40 bg-[#101824]' : 'border-[#232936] bg-[#121620]'
-                }`}>
+                <div key={i} className={`terminal-card p-5 border rounded-xl space-y-3 ${bm.recommended ? 'border-emerald-500/40 bg-[#101824]' : 'border-[#232936] bg-[#121620]'
+                  }`}>
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-sm text-white">{bm.model_type}</span>
                     {bm.recommended && (
@@ -343,7 +341,7 @@ export const IntelligenceModulesView: React.FC<IntelligenceModulesViewProps> = (
                 <div className="space-y-1.5">
                   {validation.interview_questions.map((q, i) => (
                     <div key={i} className="p-2.5 rounded bg-[#0d1017] border border-[#1f2533] text-zinc-200">
-                      <strong className="text-emerald-400 font-mono">Q{i+1}: </strong>
+                      <strong className="text-emerald-400 font-mono">Q{i + 1}: </strong>
                       {q}
                     </div>
                   ))}
@@ -357,7 +355,7 @@ export const IntelligenceModulesView: React.FC<IntelligenceModulesViewProps> = (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {validation.validation_experiments.map((exp, i) => (
                     <div key={i} className="p-3 rounded bg-[#0e121a] border border-[#202736] text-zinc-300">
-                      <span className="font-mono text-blue-400 font-bold block mb-1">Experiment #{i+1}</span>
+                      <span className="font-mono text-blue-400 font-bold block mb-1">Experiment #{i + 1}</span>
                       <p className="text-[11px] leading-relaxed">{exp}</p>
                     </div>
                   ))}
@@ -392,11 +390,10 @@ export const IntelligenceModulesView: React.FC<IntelligenceModulesViewProps> = (
                       <span className="text-[10px] font-mono text-zinc-500 mb-1">
                         {msg.sender} &bull; {msg.timestamp}
                       </span>
-                      <div className={`p-3 rounded-xl max-w-xl text-xs leading-relaxed ${
-                        isUser
-                          ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-100 rounded-br-none'
-                          : 'bg-[#181d28] border border-[#283244] text-zinc-200 rounded-bl-none'
-                      }`}>
+                      <div className={`p-3 rounded-xl max-w-xl text-xs leading-relaxed ${isUser
+                        ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-100 rounded-br-none'
+                        : 'bg-[#181d28] border border-[#283244] text-zinc-200 rounded-bl-none'
+                        }`}>
                         {msg.text}
                       </div>
                     </div>

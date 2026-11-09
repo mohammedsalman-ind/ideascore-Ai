@@ -8,19 +8,21 @@ interface SidebarProps {
   currentTab: string;
   onSelectTab: (tab: string) => void;
   hasActiveAnalysis: boolean;
+  isAnalyzing?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onSelectTab,
-  hasActiveAnalysis
+  hasActiveAnalysis,
+  isAnalyzing = false
 }) => {
   const menuItems = [
     {
       id: 'overview',
       label: 'Overview',
       icon: LayoutDashboard,
-      disabled: !hasActiveAnalysis,
+      disabled: !hasActiveAnalysis && !isAnalyzing,
       badge: hasActiveAnalysis ? 'Active' : undefined
     },
     {
@@ -33,19 +35,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'competitors',
       label: 'Existing Solutions',
       icon: Cpu,
-      disabled: !hasActiveAnalysis
+      disabled: !hasActiveAnalysis && !isAnalyzing
     },
     {
       id: 'suggestions',
       label: 'Solutions & Suggestions',
       icon: PlusCircle,
-      disabled: !hasActiveAnalysis
+      disabled: !hasActiveAnalysis && !isAnalyzing
     },
     {
       id: 'score',
       label: 'Overall Score',
       icon: ShieldCheck,
-      disabled: !hasActiveAnalysis
+      disabled: !hasActiveAnalysis && !isAnalyzing
     },
     {
       id: 'settings',

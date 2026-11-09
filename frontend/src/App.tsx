@@ -10,6 +10,7 @@ import { SolutionDetailModal } from './components/dashboard/SolutionDetailModal'
 import { RoastModal } from './components/roast/RoastModal';
 import { ImprovementModal } from './components/improvement/ImprovementModal';
 import { SettingsModal } from './components/common/SettingsModal';
+import { AIErrorModal } from './components/common/AIErrorModal';
 import { api } from './services/api';
 import {
   AnalysisJob, Solution, ProblemInput, CombinedRoastReport,
@@ -44,6 +45,11 @@ export function App() {
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [statusMessage, setStatusMessage] = useState('');
 
+  // AI Error Popup State
+  const [isErrorModalOpen, setIsErrorModalOpen] = useState(false);
+  const [aiErrorMessage, setAiErrorMessage] = useState('');
+  const [lastSubmittedInput, setLastSubmittedInput] = useState<ProblemInput | null>(null);
+
   // Initial load: settings and history
   useEffect(() => {
     loadSettings();
@@ -74,6 +80,7 @@ export function App() {
 
   // Start new analysis pipeline
   const handleStartAnalysis = async (input: ProblemInput) => {
+    setLastSubmittedInput(input);
     setIsAnalyzing(true);
     setProgressPercentage(10);
     setStatusMessage('Submitting problem and initializing validation engines...');
@@ -88,26 +95,43 @@ export function App() {
           setProgressPercentage(job.progress_percentage);
           setStatusMessage(job.status_message);
 
-          if (job.stage === 'completed' || job.stage === 'failed') {
+          if (job.stage === 'completed') {
             clearInterval(pollInterval);
             setIsAnalyzing(false);
             setActiveAnalysis(job);
-            if (job.solutions.length > 0) {
+            if (job.solutions && job.solutions.length > 0) {
               setSelectedSolution(job.solutions[0]);
               setComparedIds(job.solutions.slice(0, 3).map(s => s.id));
             }
             loadHistory();
-            setCurrentTab('overview');
+            // Requirement: Redirect user to Solutions & Suggestions page ONLY IF they are still on judge page
+            setCurrentTab((prevTab) => (prevTab === 'judge' ? 'suggestions' : prevTab));
+          } else if (job.stage === 'failed') {
+            clearInterval(pollInterval);
+            setIsAnalyzing(false);
+            setAiErrorMessage(job.error || job.status_message || 'AI analysis pipeline failed to generate results.');
+            setIsErrorModalOpen(true);
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Poll error:", err);
           clearInterval(pollInterval);
           setIsAnalyzing(false);
+          setAiErrorMessage(err?.message || 'Network error while fetching AI analysis progress.');
+          setIsErrorModalOpen(true);
         }
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
       setIsAnalyzing(false);
+      setAiErrorMessage(err?.message || 'Failed to submit problem to AI evaluation service.');
+      setIsErrorModalOpen(true);
+    }
+  };
+
+  const handleRetryAnalysis = () => {
+    setIsErrorModalOpen(false);
+    if (lastSubmittedInput) {
+      handleStartAnalysis(lastSubmittedInput);
     }
   };
 
@@ -210,6 +234,7 @@ export function App() {
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         hasActiveAnalysis={Boolean(activeAnalysis && activeAnalysis.stage === 'completed')}
+        isAnalyzing={isAnalyzing}
       />
 
       {/* Main App Workspace */}
@@ -252,21 +277,22 @@ export function App() {
           )}
 
           {/* TAB 3: EXISTING SOLUTIONS (REAL MARKET COMPETITORS) */}
-          {currentTab === 'competitors' && activeAnalysis && (
+          {currentTab === 'competitors' && (
             <ExistingSolutionsView
-              solutions={activeAnalysis.solutions}
-              researchData={activeAnalysis.research_data}
+              solutions={activeAnalysis?.solutions || []}
+              researchData={activeAnalysis?.research_data || {}}
               selectedSolutionId={selectedSolution?.id}
               onSelectSolution={(sol) => setSelectedSolution(sol)}
+              isLoading={isAnalyzing}
             />
           )}
 
           {/* TAB 4: SOLUTIONS & SUGGESTIONS */}
-          {currentTab === 'suggestions' && activeAnalysis && (
+          {currentTab === 'suggestions' && (
             <SolutionsSuggestionsView
-              solutions={activeAnalysis.solutions}
-              evaluations={activeAnalysis.evaluations}
-              researchData={activeAnalysis.research_data}
+              solutions={activeAnalysis?.solutions || []}
+              evaluations={activeAnalysis?.evaluations || {}}
+              researchData={activeAnalysis?.research_data || {}}
               onSelectSolution={(sol) => {
                 setSelectedSolution(sol);
                 setIsDetailOpen(true);
@@ -277,17 +303,19 @@ export function App() {
                 setSelectedSolution(sol);
                 setCurrentTab('competitors');
               }}
+              isLoading={isAnalyzing}
             />
           )}
 
           {/* TAB 5: OVERALL SCORE */}
-          {currentTab === 'score' && activeAnalysis && (
+          {currentTab === 'score' && (
             <OverallScoreView
-              solutions={activeAnalysis.solutions}
-              evaluations={activeAnalysis.evaluations}
-              researchData={activeAnalysis.research_data}
+              solutions={activeAnalysis?.solutions || []}
+              evaluations={activeAnalysis?.evaluations || {}}
+              researchData={activeAnalysis?.research_data || {}}
               selectedSolutionId={selectedSolution?.id}
               onSelectSolution={(sol) => setSelectedSolution(sol)}
+              isLoading={isAnalyzing}
             />
           )}
 
@@ -355,6 +383,13 @@ export function App() {
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
         onSaveSettings={handleSaveSettings}
+      />
+
+      <AIErrorModal
+        isOpen={isErrorModalOpen}
+        errorMessage={aiErrorMessage}
+        onRetry={handleRetryAnalysis}
+        onClose={() => setIsErrorModalOpen(false)}
       />
     </div>
   );

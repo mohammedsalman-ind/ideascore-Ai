@@ -12,6 +12,7 @@ interface OverallScoreViewProps {
   researchData: Record<string, ResearchResult>;
   selectedSolutionId?: string;
   onSelectSolution: (sol: Solution) => void;
+  isLoading?: boolean;
 }
 
 export const OverallScoreView: React.FC<OverallScoreViewProps> = ({
@@ -19,11 +20,22 @@ export const OverallScoreView: React.FC<OverallScoreViewProps> = ({
   evaluations,
   researchData,
   selectedSolutionId,
-  onSelectSolution
+  onSelectSolution,
+  isLoading = false
 }) => {
   const currentSolution = solutions.find(s => s.id === selectedSolutionId) || solutions[0];
   const evalResult = currentSolution ? evaluations[currentSolution.id] : null;
   const research = currentSolution ? researchData[currentSolution.id] : null;
+
+  if (isLoading && (!solutions || solutions.length === 0 || !evalResult)) {
+    return (
+      <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <h3 className="text-base font-bold text-white">Calculating Overall Idea Score...</h3>
+        <p className="text-xs text-zinc-400">Evaluating multi-criteria weighted scoring and risk matrix.</p>
+      </div>
+    );
+  }
 
   if (!solutions || solutions.length === 0 || !evalResult) {
     return (

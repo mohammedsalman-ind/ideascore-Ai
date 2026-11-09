@@ -7,16 +7,28 @@ interface ExistingSolutionsViewProps {
   researchData: Record<string, ResearchResult>;
   selectedSolutionId?: string;
   onSelectSolution: (sol: Solution) => void;
+  isLoading?: boolean;
 }
 
 export const ExistingSolutionsView: React.FC<ExistingSolutionsViewProps> = ({
   solutions,
   researchData,
   selectedSolutionId,
-  onSelectSolution
+  onSelectSolution,
+  isLoading = false
 }) => {
   const currentSolution = solutions.find(s => s.id === selectedSolutionId) || solutions[0];
   const research = currentSolution ? researchData[currentSolution.id] : null;
+
+  if (isLoading && (!solutions || solutions.length === 0)) {
+    return (
+      <div className="max-w-4xl mx-auto py-16 text-center space-y-4">
+        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <h3 className="text-base font-bold text-white">Researching Market Competitors...</h3>
+        <p className="text-xs text-zinc-400">TinyFish web crawl is discovering active market tools and alternatives.</p>
+      </div>
+    );
+  }
 
   if (!solutions || solutions.length === 0) {
     return (
@@ -81,47 +93,53 @@ export const ExistingSolutionsView: React.FC<ExistingSolutionsViewProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {research.competitors.map((comp, idx) => (
-                <div key={idx} className="p-4 rounded-lg bg-[#0e121a] border border-[#202736] flex flex-col justify-between space-y-3">
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-sm text-white tracking-tight">{comp.name}</span>
-                      {comp.url && (
-                        <a
-                          href={comp.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-zinc-500 hover:text-emerald-400 transition-colors"
-                          title="Visit product website"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+              {research.competitors.length === 0 ? (
+                <div className="col-span-full p-8 text-center text-zinc-400 bg-[#0e121a] rounded-lg border border-[#202736]">
+                  No existing solutions found for this category yet.
+                </div>
+              ) : (
+                research.competitors.map((comp, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-[#0e121a] border border-[#202736] flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-white tracking-tight">{comp.name}</span>
+                        {comp.url && (
+                          <a
+                            href={comp.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-zinc-500 hover:text-emerald-400 transition-colors"
+                            title="Visit product website"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+                        {comp.description}
+                      </p>
+                    </div>
+
+                    {/* Features & Gaps */}
+                    <div className="pt-3 border-t border-[#1d2331] text-[11px] space-y-1.5 font-mono">
+                      <div className="flex items-center justify-between text-zinc-400">
+                        <span>Pricing:</span>
+                        <span className="text-emerald-400 font-semibold">{comp.pricing_model || 'Unknown / Free'}</span>
+                      </div>
+                      {comp.key_features && comp.key_features.length > 0 && (
+                        <div className="text-zinc-400 truncate">
+                          <span className="text-zinc-500">Features: </span>{comp.key_features.slice(0, 2).join(', ')}
+                        </div>
+                      )}
+                      {comp.weaknesses_or_gaps && comp.weaknesses_or_gaps.length > 0 && (
+                        <div className="text-rose-400/90 truncate">
+                          <span className="text-zinc-500">Gap: </span>{comp.weaknesses_or_gaps[0]}
+                        </div>
                       )}
                     </div>
-                    <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
-                      {comp.description}
-                    </p>
                   </div>
-
-                  {/* Features & Gaps */}
-                  <div className="pt-3 border-t border-[#1d2331] text-[11px] space-y-1.5 font-mono">
-                    <div className="flex items-center justify-between text-zinc-400">
-                      <span>Pricing:</span>
-                      <span className="text-emerald-400 font-semibold">{comp.pricing_model || 'Unknown / Free'}</span>
-                    </div>
-                    {comp.key_features && comp.key_features.length > 0 && (
-                      <div className="text-zinc-400 truncate">
-                        <span className="text-zinc-500">Features: </span>{comp.key_features.slice(0, 2).join(', ')}
-                      </div>
-                    )}
-                    {comp.weaknesses_or_gaps && comp.weaknesses_or_gaps.length > 0 && (
-                      <div className="text-rose-400/90 truncate">
-                        <span className="text-zinc-500">Gap: </span>{comp.weaknesses_or_gaps[0]}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

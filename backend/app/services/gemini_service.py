@@ -27,13 +27,18 @@ class GeminiService:
         self.model = model.strip()
 
     async def _call_gemini_json(self, prompt: str, system_instruction: str = "") -> Dict[str, Any]:
-        """Calls Google Gemini API requesting strict JSON output."""
+        """Calls Google Gemini API requesting strict JSON output with automatic model fallback."""
         if not self.is_configured():
             logger.warning("Gemini API key not configured. Using fallback reasoning.")
             return {}
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
-        
+        candidate_models = [self.model, "gemini-3.5-flash", "gemini-3.5-flash-lite"]
+        # Deduplicate while preserving order
+        unique_models = []
+        for m in candidate_models:
+            if m and m not in unique_models:
+                unique_models.append(m)
+
         full_prompt = prompt
         if system_instruction:
             full_prompt = f"System Instruction: {system_instruction}\n\nTask:\n{prompt}"
@@ -47,24 +52,25 @@ class GeminiService:
                 "responseMimeType": "application/json"
             }
         }
-
         headers = {"Content-Type": "application/json"}
 
-        try:
-            async with httpx.AsyncClient(timeout=45.0) as client:
-                res = await client.post(url, headers=headers, json=payload)
-                if res.status_code == 200:
-                    data = res.json()
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-                        return self._clean_and_parse_json(text_content)
-                else:
-                    logger.error(f"Gemini API error {res.status_code}: {res.text}")
-                    return {}
-        except Exception as e:
-            logger.error(f"Gemini API exception: {str(e)}")
-            return {}
+        for model_to_try in unique_models:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_to_try}:generateContent?key={self.api_key}"
+            try:
+                async with httpx.AsyncClient(timeout=45.0) as client:
+                    res = await client.post(url, headers=headers, json=payload)
+                    if res.status_code == 200:
+                        data = res.json()
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            text_content = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                            parsed = self._clean_and_parse_json(text_content)
+                            if parsed:
+                                return parsed
+                    else:
+                        logger.warning(f"Gemini API model {model_to_try} returned {res.status_code}: {res.text[:150]}")
+            except Exception as e:
+                logger.error(f"Gemini API exception on {model_to_try}: {str(e)}")
 
         return {}
 
