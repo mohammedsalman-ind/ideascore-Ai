@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/layout/Sidebar';
 import { Header } from './components/layout/Header';
-import { NewAnalysisForm } from './components/workflow/NewAnalysisForm';
-import { ProblemOverviewCard } from './components/dashboard/ProblemOverviewCard';
-import { SolutionRankingsCard } from './components/dashboard/SolutionRankingsCard';
-import { MarketIntelligenceCard } from './components/dashboard/MarketIntelligenceCard';
-import { EvaluationBreakdownCard } from './components/dashboard/EvaluationBreakdownCard';
-import { RiskAssessmentCard } from './components/dashboard/RiskAssessmentCard';
-import { FinalRecommendationCard } from './components/dashboard/FinalRecommendationCard';
+import { OverviewDashboardView } from './components/dashboard/OverviewDashboardView';
+import { JudgeIdeaView } from './components/workflow/JudgeIdeaView';
+import { ExistingSolutionsView } from './components/competitors/ExistingSolutionsView';
+import { SolutionsSuggestionsView } from './components/suggestions/SolutionsSuggestionsView';
+import { OverallScoreView } from './components/score/OverallScoreView';
 import { SolutionDetailModal } from './components/dashboard/SolutionDetailModal';
 import { RoastModal } from './components/roast/RoastModal';
 import { ImprovementModal } from './components/improvement/ImprovementModal';
-import { SolutionComparisonView } from './components/comparison/SolutionComparisonView';
-import { IntelligenceModulesView } from './components/modules/IntelligenceModulesView';
-// import { AnalysisHistoryView } from './components/history/AnalysisHistoryView';
 import { SettingsModal } from './components/common/SettingsModal';
 import { api } from './services/api';
 import {
@@ -22,7 +17,7 @@ import {
 } from './types';
 
 export function App() {
-  const [currentTab, setCurrentTab] = useState<string>('new');
+  const [currentTab, setCurrentTab] = useState<string>('overview');
   const [activeAnalysis, setActiveAnalysis] = useState<AnalysisJob | null>(null);
   const [analysisHistory, setAnalysisHistory] = useState<any[]>([]);
   const [selectedSolution, setSelectedSolution] = useState<Solution | null>(null);
@@ -102,7 +97,7 @@ export function App() {
               setComparedIds(job.solutions.slice(0, 3).map(s => s.id));
             }
             loadHistory();
-            setCurrentTab('dashboard');
+            setCurrentTab('overview');
           }
         } catch (err) {
           console.error("Poll error:", err);
@@ -124,7 +119,7 @@ export function App() {
         setSelectedSolution(job.solutions[0]);
         setComparedIds(job.solutions.slice(0, 3).map(s => s.id));
       }
-      if (switchTab) setCurrentTab('dashboard');
+      if (switchTab) setCurrentTab('overview');
     } catch (e) {
       console.error("Failed to open analysis:", e);
     }
@@ -229,9 +224,26 @@ export function App() {
         />
 
         <main className="flex-1 p-6 overflow-y-auto">
-          {/* TAB 1: NEW ANALYSIS */}
-          {currentTab === 'new' && (
-            <NewAnalysisForm
+          {/* TAB 1: OVERVIEW */}
+          {currentTab === 'overview' && (
+            <OverviewDashboardView
+              analysis={activeAnalysis}
+              onNavigateToJudge={() => setCurrentTab('judge')}
+              onSelectSolution={(sol) => {
+                setSelectedSolution(sol);
+                setIsDetailOpen(true);
+              }}
+              selectedSolution={selectedSolution}
+              onRoastSolution={handleRoastSolution}
+              onFixSolution={handleFixMyIdea}
+              onToggleCompare={handleToggleCompare}
+              comparedIds={comparedIds}
+            />
+          )}
+
+          {/* TAB 2: JUDGE IDEA */}
+          {currentTab === 'judge' && (
+            <JudgeIdeaView
               onSubmit={handleStartAnalysis}
               isLoading={isAnalyzing}
               progressPercentage={progressPercentage}
@@ -239,85 +251,47 @@ export function App() {
             />
           )}
 
-          {/* TAB 2: OVERVIEW / DASHBOARD */}
-          {currentTab === 'dashboard' && activeAnalysis && (
-            <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-300">
-              {/* Section A: Problem Overview */}
-              {activeAnalysis.problem_understanding && (
-                <ProblemOverviewCard
-                  originalProblem={activeAnalysis.problem_input.problem_text}
-                  understanding={activeAnalysis.problem_understanding}
-                />
-              )}
-
-              {/* Section B: Solution Rankings */}
-              <SolutionRankingsCard
-                rankings={activeAnalysis.rankings}
-                selectedSolutionId={selectedSolution?.id}
-                onSelectSolution={(sol) => {
-                  setSelectedSolution(sol);
-                  setIsDetailOpen(true);
-                }}
-                onRoastSolution={handleRoastSolution}
-                onFixSolution={handleFixMyIdea}
-                onToggleCompare={handleToggleCompare}
-                comparedIds={comparedIds}
-              />
-
-              {/* Section C: TinyFish Market Intelligence (for selected solution) */}
-              {selectedResearch && selectedSolution && (
-                <MarketIntelligenceCard
-                  research={selectedResearch}
-                  solutionName={selectedSolution.name}
-                />
-              )}
-
-              {/* Section D: Deterministic Evaluation Breakdown */}
-              {selectedEvaluation && selectedSolution && (
-                <EvaluationBreakdownCard
-                  evaluation={selectedEvaluation}
-                  solutionName={selectedSolution.name}
-                />
-              )}
-
-              {/* Section E: Risk Assessment & Mitigation */}
-              {selectedEvaluation && selectedSolution && (
-                <RiskAssessmentCard
-                  risks={selectedEvaluation.major_risks}
-                  solutionName={selectedSolution.name}
-                />
-              )}
-
-              {/* Section F: Final Venture Recommendation */}
-              {activeAnalysis.final_recommendation && (
-                <FinalRecommendationCard
-                  recommendation={activeAnalysis.final_recommendation}
-                />
-              )}
-            </div>
+          {/* TAB 3: EXISTING SOLUTIONS (REAL MARKET COMPETITORS) */}
+          {currentTab === 'competitors' && activeAnalysis && (
+            <ExistingSolutionsView
+              solutions={activeAnalysis.solutions}
+              researchData={activeAnalysis.research_data}
+              selectedSolutionId={selectedSolution?.id}
+              onSelectSolution={(sol) => setSelectedSolution(sol)}
+            />
           )}
 
-          {/* TAB 3: COMPARE SOLUTIONS */}
-          {currentTab === 'compare' && activeAnalysis && (
-            <SolutionComparisonView
+          {/* TAB 4: SOLUTIONS & SUGGESTIONS */}
+          {currentTab === 'suggestions' && activeAnalysis && (
+            <SolutionsSuggestionsView
               solutions={activeAnalysis.solutions}
               evaluations={activeAnalysis.evaluations}
-              onRunComparison={handleRunComparison}
-              initialComparedIds={comparedIds}
+              researchData={activeAnalysis.research_data}
+              onSelectSolution={(sol) => {
+                setSelectedSolution(sol);
+                setIsDetailOpen(true);
+              }}
+              onRoastSolution={handleRoastSolution}
+              onFixSolution={handleFixMyIdea}
+              onCompareWithExisting={(sol) => {
+                setSelectedSolution(sol);
+                setCurrentTab('competitors');
+              }}
             />
           )}
 
-          {/* TAB 4: INTELLIGENCE MODULES */}
-          {currentTab === 'modules' && activeAnalysis && (
-            <IntelligenceModulesView
+          {/* TAB 5: OVERALL SCORE */}
+          {currentTab === 'score' && activeAnalysis && (
+            <OverallScoreView
               solutions={activeAnalysis.solutions}
+              evaluations={activeAnalysis.evaluations}
+              researchData={activeAnalysis.research_data}
+              selectedSolutionId={selectedSolution?.id}
+              onSelectSolution={(sol) => setSelectedSolution(sol)}
             />
           )}
 
-          {/* TAB 5: MY ANALYSES HISTORY */}
-          {/* History tab removed per user request */}
-
-          {/* TAB 6: SETTINGS */}
+          {/* TAB 6: SETTINGS & API */}
           {currentTab === 'settings' && (
             <div className="max-w-2xl mx-auto py-8">
               <div className="terminal-card p-6 border border-[#232936] bg-[#121620] rounded-xl space-y-4">
@@ -327,7 +301,7 @@ export function App() {
                 </p>
                 <button
                   onClick={() => setIsSettingsOpen(true)}
-                  className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-black shadow-glow-sm"
+                  className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-black shadow-glow-sm cursor-pointer"
                 >
                   Configure API Keys
                 </button>
